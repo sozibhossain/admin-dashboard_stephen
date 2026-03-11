@@ -9,6 +9,7 @@ import { createManager } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export default function AddManagerPage() {
@@ -34,7 +35,6 @@ export default function AddManagerPage() {
       return;
     }
 
-    formData.set("category", "normal");
     formData.delete("confirmPassword");
     mutation.mutate(formData);
   }
@@ -87,11 +87,55 @@ export default function AddManagerPage() {
       <p className="text-body-16 text-white/80">Create and manage your Mange Manager&apos;s</p>
 
       <form action={onSubmit} className="space-y-4">
-        <input type="hidden" name="category" value="normal" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <Label>Manager Name</Label>
+            <Input name="name" placeholder="Enter project manager name" required />
+          </div>
+          <div>
+            <Label>Image</Label>
+            <div className="mt-2 rounded-lg border border-dashed border-white/50 p-6 text-center">
+              {avatarPreview ? (
+                <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-lg border border-white/30">
+                  <div
+                    className="h-full w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url(${avatarPreview})` }}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
+                    onClick={clearAvatarSelection}
+                    aria-label="Remove selected image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Label htmlFor="avatar" className="cursor-pointer text-body-16">
+                  <Upload className="mx-auto mb-2 h-8 w-8 text-[#6d63d7]" />
+                  Upload Photo
+                  <p className="text-body-16 text-white/70">png,jpeg,jpg</p>
+                </Label>
+              )}
+              <Input
+                ref={avatarInputRef}
+                id="avatar"
+                name="avatar"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+            </div>
+          </div>
+        </div>
 
         <div>
-          <Label>Manager Name</Label>
-          <Input name="name" placeholder="Enter project manager name" required />
+          <Label>Category</Label>
+          <Select name="category" defaultValue="construction" className="mt-2" required>
+            <option value="construction">Construction</option>
+            <option value="interior">Interior</option>
+          </Select>
         </div>
 
         <div>
@@ -110,40 +154,6 @@ export default function AddManagerPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-dashed border-white/50 p-8 text-center">
-          {avatarPreview ? (
-            <div className="relative mx-auto h-44 w-44 overflow-hidden rounded-lg border border-white/30">
-              <div
-                className="h-full w-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${avatarPreview})` }}
-              />
-              <button
-                type="button"
-                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
-                onClick={clearAvatarSelection}
-                aria-label="Remove selected image"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <Label htmlFor="avatar" className="cursor-pointer text-body-16">
-              <Upload className="mx-auto mb-2 h-8 w-8 text-[#6d63d7]" />
-              Upload Photo
-              <p className="text-body-16 text-white/70">png,jpeg,jpg</p>
-            </Label>
-          )}
-          <Input
-            ref={avatarInputRef}
-            id="avatar"
-            name="avatar"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarChange}
-          />
-        </div>
-
         <div className="grid gap-4 pt-2 md:grid-cols-2">
           <Link href="/managers">
             <Button type="button" variant="outline" className="h-12 w-full">
@@ -158,4 +168,3 @@ export default function AddManagerPage() {
     </div>
   );
 }
-
