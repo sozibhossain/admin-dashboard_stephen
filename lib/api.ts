@@ -2,6 +2,7 @@
 import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
 import { BASE_URL } from "@/lib/constants";
+import { AxiosHeaders, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 export type ApiResponse<T> = {
   success: boolean;
@@ -139,26 +140,145 @@ type FinancialOverviewData = {
   projects: Project[];
 };
 
+type RetryRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+
 const http = axios.create({
   baseURL: BASE_URL,
   timeout: 20_000,
+  withCredentials: true,
 });
 
-http.interceptors.request.use(async (config) => {
-  const session: Session | null = await getSession();
-  if (session?.accessToken) {
-    config.headers.Authorization = `Bearer ${session.accessToken}`;
+let accessTokenCache: string | null = null;
+let refreshTokenCache: string | null = null;
+let refreshAccessTokenPromise: Promise<string | null> | null = null;
+
+const setAuthHeader = (config: RetryRequestConfig, token: string) => {
+  if (!config.headers) {
+    config.headers = new AxiosHeaders();
   }
-  return config;
+  config.headers.set("Authorization", `Bearer ${token}`);
+};
+
+const setRefreshHeader = (config: RetryRequestConfig, token: string) => {
+  if (!config.headers) {
+    config.headers = new AxiosHeaders();
+  }
+  config.headers.set("x-refresh-token", token);
+};
+
+const loadSessionTokens = async () => {
+  if (accessTokenCache || refreshTokenCache) {
+    return {
+      accessToken: accessTokenCache,
+      refreshToken: refreshTokenCache,
+    };
+  }
+
+  const session: Session | null = await getSession();
+  accessTokenCache = session?.accessToken ?? null;
+  refreshTokenCache = session?.refreshToken ?? null;
+
+  return {
+    accessToken: accessTokenCache,
+    refreshToken: refreshTokenCache,
+  };
+};
+
+const refreshAccessToken = async () => {
+  if (refreshAccessTokenPromise) {
+    return refreshAccessTokenPromise;
+  }
+
+  refreshAccessTokenPromise = (async () => {
+    const { refreshToken } = await loadSessionTokens();
+    if (!refreshToken) {
+      return null;
+    }
+
+    const { data } = await axios.post<
+      ApiResponse<{ accessToken: string; refreshToken?: string }>
+    >(
+      `${BASE_URL}/auth/refresh-token`,
+      { refreshToken },
+      {
+        withCredentials: true,
+        timeout: 20_000,
+      },
+    );
+
+    const nextAccessToken = data?.data?.accessToken ?? null;
+    const nextRefreshToken = data?.data?.refreshToken ?? refreshToken;
+
+    accessTokenCache = nextAccessToken;
+    refreshTokenCache = nextRefreshToken;
+
+    return nextAccessToken;
+  })()
+    .catch(() => {
+      accessTokenCache = null;
+      refreshTokenCache = null;
+      return null;
+    })
+    .finally(() => {
+      refreshAccessTokenPromise = null;
+    });
+
+  return refreshAccessTokenPromise;
+};
+
+http.interceptors.request.use(async (config) => {
+  const requestConfig = config as RetryRequestConfig;
+  const { accessToken, refreshToken } = await loadSessionTokens();
+
+  if (accessToken) {
+    setAuthHeader(requestConfig, accessToken);
+  }
+
+  if (refreshToken) {
+    setRefreshHeader(requestConfig, refreshToken);
+  }
+
+  return requestConfig;
 });
 
 http.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response) => {
+    const nextAccessToken = response.headers?.["x-access-token"] as
+      | string
+      | undefined;
+
+    if (nextAccessToken) {
+      accessTokenCache = nextAccessToken;
+    }
+
+    return response;
+  },
+  async (error: AxiosError<{ message?: string }>) => {
+    const originalConfig = error.config as RetryRequestConfig | undefined;
+    const statusCode = error.response?.status;
+
+    if (statusCode === 401 && originalConfig && !originalConfig._retry) {
+      originalConfig._retry = true;
+
+      const nextAccessToken = await refreshAccessToken();
+      if (nextAccessToken) {
+        setAuthHeader(originalConfig, nextAccessToken);
+
+        if (refreshTokenCache) {
+          setRefreshHeader(originalConfig, refreshTokenCache);
+        }
+
+        return http(originalConfig);
+      }
+    }
+
     const message =
       error?.response?.data?.message ||
       error?.message ||
       "Something went wrong";
+
     return Promise.reject(new Error(message));
   },
 );
