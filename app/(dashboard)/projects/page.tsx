@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Edit2, Plus, Search } from "lucide-react";
+import { Edit2, Plus, Search, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  deleteProject,
   getManagers,
   getProjects,
   updateProject,
@@ -23,6 +24,14 @@ import UpdateProjectModal, {
 } from "./_components/Update_project";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +46,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [clientName, setClientName] = useState("");
   const [projectName, setProjectName] = useState("");
   const [category, setCategory] = useState<string>(PROJECT_CATEGORIES[0].value);
@@ -85,6 +95,16 @@ export default function ProjectsPage() {
       queryClient.invalidateQueries({
         queryKey: ["project", variables.projectId],
       });
+      queryClient.invalidateQueries({ queryKey: ["financials"] });
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const deleteProjectMutation = useMutation({
+    mutationFn: (projectId: string) => deleteProject(projectId),
+    onSuccess: () => {
+      toast.success("Project deleted successfully");
+      setDeletingProject(null);
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["financials"] });
     },
     onError: (error) => toast.error(error.message),
@@ -365,6 +385,14 @@ export default function ProjectsPage() {
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingProject(project)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 text-white/70 transition hover:border-white/30 hover:text-white"
+                          aria-label={`Delete ${project.projectName}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -425,6 +453,53 @@ export default function ProjectsPage() {
         onRemoveNewImage={handleRemoveNewImage}
         isPending={updateProjectMutation.isPending}
       />
+
+      <Dialog
+        open={Boolean(deletingProject)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !deleteProjectMutation.isPending) {
+            setDeletingProject(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-white">
+                {deletingProject?.projectName}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              onClick={() => setDeletingProject(null)}
+              disabled={deleteProjectMutation.isPending}
+            >
+              No
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-11"
+              onClick={() => {
+                if (deletingProject?._id) {
+                  deleteProjectMutation.mutate(deletingProject._id);
+                }
+              }}
+              disabled={deleteProjectMutation.isPending}
+            >
+              {deleteProjectMutation.isPending ? "Deleting..." : "Yes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -9,7 +9,6 @@ import { createManager } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export default function AddManagerPage() {
@@ -132,10 +131,8 @@ export default function AddManagerPage() {
 
         <div>
           <Label>Category</Label>
-          <Select name="category" defaultValue="construction" className="mt-2" required>
-            <option value="construction">Construction</option>
-            <option value="interior">Interior</option>
-          </Select>
+          <Input value="Construction" readOnly className="mt-2 cursor-not-allowed" />
+          <input type="hidden" name="category" value="construction" />
         </div>
 
         <div>

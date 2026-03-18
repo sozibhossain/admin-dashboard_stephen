@@ -1,7 +1,7 @@
-﻿import axios from "axios";
+import axios from "axios";
 import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
-import { BASE_URL } from "@/lib/constants";
+import { BASE_URL, DASHBOARD_CATEGORY } from "@/lib/constants";
 import { AxiosHeaders, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 export type ApiResponse<T> = {
@@ -336,8 +336,15 @@ export async function getDashboard() {
 }
 
 export async function getProjects(search?: string) {
+  const params: { search?: string; category: string } = {
+    category: DASHBOARD_CATEGORY,
+  };
+  if (search) {
+    params.search = search;
+  }
+
   const { data } = await http.get<ApiResponse<Project[]>>("/projects", {
-    params: search ? { search } : {},
+    params,
   });
   return data.data;
 }
@@ -391,7 +398,9 @@ export async function updateProject(
 }
 
 export async function getManagers() {
-  const { data } = await http.get<ApiResponse<User[]>>("/admin/managers");
+  const { data } = await http.get<ApiResponse<User[]>>("/admin/managers", {
+    params: { category: DASHBOARD_CATEGORY },
+  });
   return data.data;
 }
 
@@ -401,7 +410,10 @@ export async function getAdminProjects(params?: {
   manager?: string;
 }) {
   const { data } = await http.get<ApiResponse<Project[]>>("/admin/projects", {
-    params,
+    params: {
+      ...params,
+      category: DASHBOARD_CATEGORY,
+    },
   });
   return data.data;
 }
@@ -421,8 +433,21 @@ export async function deleteManager(managerId: string) {
 export async function getFinancialOverview() {
   const { data } = await http.get<ApiResponse<FinancialOverviewData>>(
     "/admin/financial-overview",
+    {
+      params: { category: DASHBOARD_CATEGORY },
+    },
   );
   return data.data;
+}
+
+export async function deleteProject(projectId: string) {
+  const { data } = await http.delete<ApiResponse<null>>(
+    `/admin/projects/${projectId}`,
+    {
+      params: { category: DASHBOARD_CATEGORY },
+    },
+  );
+  return data;
 }
 
 export async function updatePhasePaymentStatus(

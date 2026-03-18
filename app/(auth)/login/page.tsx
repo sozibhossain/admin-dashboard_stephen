@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     const email = String(formData.get("email") || "");
     const password = String(formData.get("password") || "");
-    const category = String(formData.get("category") || "normal");
+    const category = String(formData.get("category") || "construction");
 
     const result = await signIn("credentials", {
       email,
@@ -32,7 +32,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      toast.error("Invalid email or password");
+      toast.error("Invalid credentials or unauthorized category. Use construction admin account.");
       return;
     }
 
@@ -46,7 +46,7 @@ export default function LoginPage() {
       <p className="text-body-16 mb-8 mt-2 text-black/80">Access your account to Continue your learning journey.</p>
 
       <form action={onSubmit} className="space-y-5">
-        <input type="hidden" name="category" value="normal" />
+        <input type="hidden" name="category" value="construction" />
 
         <div>
           <Label className="text-black">Email Address</Label>
@@ -86,4 +86,3 @@ export default function LoginPage() {
     </Card>
   );
 }
-

@@ -5,6 +5,9 @@ import { z } from "zod";
 import { authConfig } from "./auth.config";
 import { BASE_URL } from "./lib/constants";
 
+const REQUIRED_DASHBOARD_ROLE = "admin";
+const REQUIRED_DASHBOARD_CATEGORY = "construction";
+
 type LoginResponse = {
   success: boolean;
   data: {
@@ -83,7 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .object({
             email: z.string().email(),
             password: z.string().min(6),
-            category: z.string().default("normal"),
+            category: z.string().default(REQUIRED_DASHBOARD_CATEGORY),
           })
           .safeParse(credentials);
 
@@ -100,14 +103,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const json = (await res.json()) as LoginResponse;
         if (!json.success || !json.data?.accessToken) return null;
 
-        console.log()
+        const resolvedRole = String(json.data.role ?? "").trim().toLowerCase();
+        const resolvedCategory = String(json.data.category ?? "").trim().toLowerCase();
+        if (
+          resolvedRole !== REQUIRED_DASHBOARD_ROLE ||
+          resolvedCategory !== REQUIRED_DASHBOARD_CATEGORY
+        ) {
+          return null;
+        }
 
         return {
           id: json.data._id,
           name: json.data.name,
           email: json.data.email,
           role: json.data.role,
-          category: json.data.category ?? validated.data.category,
+          category: resolvedCategory,
           accessToken: json.data.accessToken,
           refreshToken: json.data.refreshToken,
           accessTokenExpires: parseJwtExpiryMs(json.data.accessToken),
@@ -149,4 +159,3 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
-

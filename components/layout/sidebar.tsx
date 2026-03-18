@@ -39,11 +39,11 @@ export function Sidebar({ mobile = false, onNav }: { mobile?: boolean; onNav?: (
             width={110}
             height={78}
             unoptimized
-            className="h-[78px] w-auto object-contain"
+            className="h-[65px] w-auto object-contain"
             onError={() => setLogoError(true)}
           />
         ) : (
-          <span className="font-clash text-white">NF</span>
+          <span className="font-clash text-white">Logo</span>
         )}
       </div>
 
