@@ -11,7 +11,7 @@ import {
   updateProject,
   type Project,
 } from "@/lib/api";
-import { PROJECT_CATEGORIES } from "@/lib/constants";
+import { DASHBOARD_CATEGORY } from "@/lib/constants";
 import {
   calculateProjectBudget,
   parseAmountInput,
@@ -49,7 +49,6 @@ export default function ProjectsPage() {
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [clientName, setClientName] = useState("");
   const [projectName, setProjectName] = useState("");
-  const [category, setCategory] = useState<string>(PROJECT_CATEGORIES[0].value);
   const [siteManagerId, setSiteManagerId] = useState("");
   const [address, setAddress] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -122,7 +121,6 @@ export default function ProjectsPage() {
     setEditingProject(project);
     setClientName(project.clientName ?? "");
     setProjectName(project.projectName ?? "");
-    setCategory(project.category ?? PROJECT_CATEGORIES[0].value);
     setSiteManagerId(project.siteManager?._id ?? "");
     setAddress(project.address ?? "");
     setStartDate(toDateInputValue(project.startDate));
@@ -224,7 +222,6 @@ export default function ProjectsPage() {
     const missingFields = [
       !clientName.trim() ? "Client Name" : null,
       !projectName.trim() ? "Projects Name" : null,
-      !category.trim() ? "Projects Categories" : null,
       !startDate ? "Projects Start Date" : null,
       !endDate ? "Projects End Date" : null,
       !address.trim() ? "Address" : null,
@@ -282,7 +279,7 @@ export default function ProjectsPage() {
     const payload = new FormData();
     payload.set("clientName", clientName.trim());
     payload.set("projectName", projectName.trim());
-    payload.set("category", category);
+    payload.set("category", DASHBOARD_CATEGORY);
     payload.set("phases", JSON.stringify(normalizedPhases));
     payload.set("startDate", startDate);
     payload.set("endDate", endDate);
@@ -427,8 +424,6 @@ export default function ProjectsPage() {
         onClientNameChange={setClientName}
         projectName={projectName}
         onProjectNameChange={setProjectName}
-        category={category}
-        onCategoryChange={setCategory}
         siteManagerId={siteManagerId}
         onSiteManagerIdChange={setSiteManagerId}
         managers={managers?.map((manager) => ({

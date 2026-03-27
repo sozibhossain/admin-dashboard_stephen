@@ -12,8 +12,28 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 
+function resolveErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+  return fallback;
+}
+
 // --- Sub-component: Password Input with Toggle ---
-function PasswordInput({ name, id, required }: { name: string; id: string; required?: boolean }) {
+function PasswordInput({
+  name,
+  id,
+  required,
+  placeholder,
+}: {
+  name: string;
+  id: string;
+  required?: boolean;
+  placeholder?: string;
+}) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -22,7 +42,7 @@ function PasswordInput({ name, id, required }: { name: string; id: string; requi
         name={name}
         type={show ? "text" : "password"}
         className="pr-10"
-        placeholder="********"
+        placeholder={placeholder}
         required={required}
       />
       <button
@@ -64,13 +84,13 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setAvatarFile(null);
     },
-    onError: (error: any) => toast.error(error.message || "Failed to update profile"),
+    onError: (error: unknown) => toast.error(resolveErrorMessage(error, "Failed to update profile")),
   });
 
   const passwordMutation = useMutation({
     mutationFn: changePassword,
     onSuccess: () => toast.success("Password changed successfully"),
-    onError: (error: any) => toast.error(error.message || "Failed to change password"),
+    onError: (error: unknown) => toast.error(resolveErrorMessage(error, "Failed to change password")),
   });
 
   // --- Handlers ---
@@ -98,6 +118,12 @@ export default function SettingsPage() {
   async function onProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const adminChangeEmail = String(formData.get("adminChangeEmail") || "").trim();
+    const profileEmail = String(formData.get("email") || "").trim();
+    const nextEmail = (adminChangeEmail || profileEmail).toLowerCase();
+    if (nextEmail) {
+      formData.set("email", nextEmail);
+    }
     if (avatarFile) formData.set("avatar", avatarFile);
     formData.set("removeAvatar", removeAvatar ? "true" : "false");
     profileMutation.mutate(formData);
@@ -134,7 +160,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 p-6">
+    <div className=" space-y-8 p-6">
       <header>
         <h2 className="text-[40px] font-bold leading-tight">Setting</h2>
         <p className="text-white/60">Edit your personal information</p>
@@ -167,14 +193,6 @@ export default function SettingsPage() {
               </button>
             )}
             
-            <input
-              ref={avatarInputRef}
-              id="avatar"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
           </div>
 
           {/* Fields Section */}
@@ -195,6 +213,16 @@ export default function SettingsPage() {
                 <Input id="name" name="name" defaultValue={data?.name} className="bg-[#222] border-white/10" />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  defaultValue={data?.email ?? ""}
+                  className="bg-[#222] border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input id="phone" name="phone" defaultValue={data?.phone ?? ""} className="bg-[#222] border-white/10" />
               </div>
@@ -210,15 +238,30 @@ export default function SettingsPage() {
           <div className="grid gap-6 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <PasswordInput id="currentPassword" name="currentPassword" required />
+              <PasswordInput
+                id="currentPassword"
+                name="currentPassword"
+                placeholder="Current Password"
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <PasswordInput id="newPassword" name="newPassword" required />
+              <PasswordInput
+                id="newPassword"
+                name="newPassword"
+                placeholder="New Password"
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <PasswordInput id="confirmPassword" name="confirmPassword" required />
+              <PasswordInput
+                id="confirmPassword"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                required
+              />
             </div>
           </div>
 

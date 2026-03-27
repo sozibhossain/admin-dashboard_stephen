@@ -2,7 +2,6 @@
 
 import type { FormEvent } from "react";
 import { Plus, Upload, X } from "lucide-react";
-import { PROJECT_CATEGORIES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,8 +43,6 @@ type UpdateProjectModalProps = {
   onClientNameChange: (value: string) => void;
   projectName: string;
   onProjectNameChange: (value: string) => void;
-  category: string;
-  onCategoryChange: (value: string) => void;
   siteManagerId: string;
   onSiteManagerIdChange: (value: string) => void;
   managers?: ManagerOption[];
@@ -80,8 +77,6 @@ export default function UpdateProjectModal({
   onClientNameChange,
   projectName,
   onProjectNameChange,
-  category,
-  onCategoryChange,
   siteManagerId,
   onSiteManagerIdChange,
   managers,
@@ -142,34 +137,19 @@ export default function UpdateProjectModal({
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label>Projects Categories</Label>
-                <Select
-                  value={category}
-                  onChange={(event) => onCategoryChange(event.target.value)}
-                >
-                  {PROJECT_CATEGORIES.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Site Manager</Label>
-                <Select
-                  value={siteManagerId}
-                  onChange={(event) => onSiteManagerIdChange(event.target.value)}
-                >
-                  <option value="">Select a manager</option>
-                  {(managers ?? []).map((manager) => (
-                    <option key={manager._id} value={manager._id}>
-                      {manager.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
+            <div>
+              <Label>Site Manager</Label>
+              <Select
+                value={siteManagerId}
+                onChange={(event) => onSiteManagerIdChange(event.target.value)}
+              >
+                <option value="">Select a manager</option>
+                {(managers ?? []).map((manager) => (
+                  <option key={manager._id} value={manager._id}>
+                    {manager.name}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             {phases.map((phase, index) => (

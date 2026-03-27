@@ -7,6 +7,10 @@ import { BASE_URL } from "./lib/constants";
 
 const REQUIRED_DASHBOARD_ROLE = "admin";
 const REQUIRED_DASHBOARD_CATEGORY = "construction";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const SESSION_COOKIE_NAME = IS_PRODUCTION
+  ? "__Secure-construction-admin.session-token"
+  : "construction-admin.session-token";
 
 type LoginResponse = {
   success: boolean;
@@ -71,6 +75,18 @@ async function refreshAccessToken(token: JWT) {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: SESSION_COOKIE_NAME,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: IS_PRODUCTION,
+      },
+    },
+  },
   session: {
     strategy: "jwt",
   },

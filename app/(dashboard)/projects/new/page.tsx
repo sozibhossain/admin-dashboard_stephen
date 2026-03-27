@@ -6,7 +6,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState 
 import { ChevronLeft, Eye, EyeOff, Plus, Upload, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createProject, getManagers } from "@/lib/api";
-import { PROJECT_CATEGORIES } from "@/lib/constants";
+import { DASHBOARD_CATEGORY } from "@/lib/constants";
 import { calculateProjectBudget, parseAmountInput } from "@/lib/project-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,7 +98,7 @@ export default function AddProjectPage() {
 
     const clientName = String(formData.get("clientName") || "").trim();
     const projectName = String(formData.get("projectName") || "").trim();
-    const category = String(formData.get("category") || "").trim();
+    const category = DASHBOARD_CATEGORY;
     const startDate = String(formData.get("startDate") || "").trim();
     const endDate = String(formData.get("endDate") || "").trim();
     const address = String(formData.get("address") || "").trim();
@@ -110,7 +110,6 @@ export default function AddProjectPage() {
     const missingFields = [
       !clientName ? "Client Name" : null,
       !projectName ? "Projects Name" : null,
-      !category ? "Projects Categories" : null,
       !startDate ? "Projects Start Date" : null,
       !endDate ? "Projects End Date" : null,
       !address ? "Address" : null,
@@ -254,17 +253,6 @@ export default function AddProjectPage() {
         <div>
           <Label>Projects Name</Label>
           <Input name="projectName" placeholder="Enter project name" required />
-        </div>
-
-        <div>
-          <Label>Projects Categories</Label>
-          <Select name="category" required>
-            {PROJECT_CATEGORIES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </Select>
         </div>
 
         {phases.map((phase, index) => (

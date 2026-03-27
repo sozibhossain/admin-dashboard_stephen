@@ -6,6 +6,7 @@ import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { ChevronLeft, Upload, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { createManager } from "@/lib/api";
+import { DASHBOARD_CATEGORY } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,6 +87,8 @@ export default function AddManagerPage() {
       <p className="text-body-16 text-white/80">Create and manage your Mange Manager&apos;s</p>
 
       <form action={onSubmit} className="space-y-4">
+        <input type="hidden" name="category" value={DASHBOARD_CATEGORY} />
+
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <Label>Manager Name</Label>
@@ -127,12 +130,6 @@ export default function AddManagerPage() {
               />
             </div>
           </div>
-        </div>
-
-        <div>
-          <Label>Category</Label>
-          <Input value="Construction" readOnly className="mt-2 cursor-not-allowed" />
-          <input type="hidden" name="category" value="construction" />
         </div>
 
         <div>
